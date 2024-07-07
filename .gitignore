@@ -1,0 +1,4 @@
+.env
+docker/php/logs/
+docker/server/logs/
+docker/database/

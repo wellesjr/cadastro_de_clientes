@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  # PHP Service
+  app:
+    build:
+      context: ./docker/app
+      dockerfile: Dockerfile
+    container_name: php_app
+    volumes:
+      - ./src:/var/www/html/cadastro_de_clientes/src
+      - ./docker/php/logs:/var/www/html/cadastro_de_clientes/src/storage/logs
+    networks:
+      - internal
+    depends_on:
+      - database
+
+  # MySQL Database Service
+  database:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - ./.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/database/logs:/var/log/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - internal
+
+  # Nginx Service
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_server
+    ports:
+      - "80:80"
+    volumes:
+      - ./src:/var/www/html/cadastro_de_clientes/src:ro
+      - ./docker/server/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/server/logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  mysql_data:
