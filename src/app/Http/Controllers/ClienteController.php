@@ -2,62 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cliente;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Services\ClienteService;
 
 class ClienteController extends Controller
 {
+    protected $service;
+
+    public function __construct(ClienteService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index()
     {
-        $clientes = Cliente::all();
-        return response()->json($clientes);
+        $clientes = $this->service->listarClientes();
+        return view('clientes.index', compact('clientes'));
+    }
+
+    public function create()
+    {
+        return view('clientes.create');
     }
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nome' => 'required|string|max:255',
-            'email' => 'required|email|unique:clientes',
-            'telefone' => 'required|string|max:15',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $cliente = Cliente::create($request->all());
-        return response()->json($cliente, 201);
+        $dados = $request->only(['nome', 'email', 'telefone']);
+        $this->service->criarCliente($dados);
+        return redirect()->route('clientes.index');
     }
 
-    public function show($id)
+    public function edit($id)
     {
-        $cliente = Cliente::findOrFail($id);
-        return response()->json($cliente);
+        $cliente = $this->service->buscarCliente($id);
+        return view('clientes.edit', compact('cliente'));
     }
 
     public function update(Request $request, $id)
     {
-        $cliente = Cliente::findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'nome' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:clientes,email,' . $cliente->id,
-            'telefone' => 'sometimes|required|string|max:15',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $cliente->update($request->all());
-        return response()->json($cliente);
+        $dados = $request->only(['nome', 'email', 'telefone']);
+        $this->service->atualizarCliente($dados, $id);
+        return redirect()->route('clientes.index');
     }
 
     public function destroy($id)
     {
-        $cliente = Cliente::findOrFail($id);
-        $cliente->delete();
-        return response()->json(null, 204);
+        $this->service->excluirCliente($id);
+        return redirect()->route('clientes.index');
     }
 }
