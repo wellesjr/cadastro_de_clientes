@@ -20,34 +20,46 @@ class ClienteController extends Controller
         return view('clientes.index', compact('clientes'));
     }
 
-    public function create()
-    {
-        return view('clientes.create');
-    }
-
-    public function store(Request $request)
+    public function create(Request $request)
     {
         $dados = $request->only(['nome', 'email', 'telefone']);
         $this->service->criarCliente($dados);
+        if ($request->ajax()) {
+            return response()->json(['success' => true]);
+        }
         return redirect()->route('clientes.index');
-    }
-
-    public function edit($id)
-    {
-        $cliente = $this->service->buscarCliente($id);
-        return view('clientes.edit', compact('cliente'));
     }
 
     public function update(Request $request, $id)
     {
         $dados = $request->only(['nome', 'email', 'telefone']);
         $this->service->atualizarCliente($dados, $id);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
         return redirect()->route('clientes.index');
     }
 
-    public function destroy($id)
-    {
-        $this->service->excluirCliente($id);
-        return redirect()->route('clientes.index');
+    public function destroy(Request $request, $id){
+        try {
+            $clienteExcluido = $this->service->excluirCliente($id);
+            if (!$clienteExcluido) {
+                return response()->json(['success' => false, 'message' => 'Cliente não encontrado'], 404);
+            }
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true]);
+            }
+
+            return redirect()->route('clientes.index')->with('success', 'Cliente excluído com sucesso');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+
+            return redirect()->route('clientes.index')->with('error', 'Ocorreu um erro ao excluir o cliente');
+        }
     }
 }
