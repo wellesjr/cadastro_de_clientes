@@ -19,11 +19,10 @@ RUN apk --no-cache add \
 
 # Instale extensões do PHP necessárias
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install mysqli pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Instale e configure o Xdebug
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+RUN pecl install xdebug && docker-php-ext-enable xdebug
 
 # Instale o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
